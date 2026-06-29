@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Database
+*.db
+
+# Logs
+*.log
+*.err.log
+
+# Uploads
+uploads/
+
+# VS Code
+.vscode/
+
+# Environment
+.env
