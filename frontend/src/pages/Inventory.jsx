@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../api/client'
 import Modal from '../components/Modal'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, Search, AlertTriangle, X, FileSpreadsheet, FileText } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, AlertTriangle, X, FileSpreadsheet, FileText, Printer } from 'lucide-react'
 import { exportToExcel, exportToPDF } from '../utils/exportUtils'
 import MultiSelect from '../components/MultiSelect'
 
@@ -218,32 +218,50 @@ export default function Inventory() {
 
   return (
     <div className="page-container animate-fade">
+      {/* Print Only Header */}
+      <div className="print-only-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <img src="/logo-black.png" alt="GoBites Logo" style={{ height: 45, objectFit: 'contain' }} />
+          <div style={{ textAlign: 'right' }}>
+            <h2 style={{ margin: 0, fontSize: 18, color: '#8B5E3C', fontWeight: 700 }}>GoBites Management System</h2>
+            <p style={{ margin: '2px 0 0 0', fontSize: 11, color: '#7A6858' }}>
+              Document: Inventory Status Report | Generated: {new Date().toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Inventory</h1>
           <p className="page-subtitle">{items.length} items · {lowCount > 0 && <span className="text-danger">{lowCount} need attention</span>}</p>
         </div>
-        <button id="add-inventory-btn" className="btn btn-primary" onClick={openAdd}>
-          <Plus size={16} /> Add Item
-        </button>
+        <div className="flex gap-2 print-hide" style={{ alignItems: 'center' }}>
+          <button className="btn btn-secondary" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Printer size={16} /> Print Page
+          </button>
+          <button id="add-inventory-btn" className="btn btn-primary" onClick={openAdd}>
+            <Plus size={16} /> Add Item
+          </button>
+        </div>
       </div>
 
       {/* Value Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
-        <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(92,158,80,0.10) 100%)', border: '1px solid rgba(92,158,80,0.25)', borderRadius: 'var(--r-lg)', padding: '16px 20px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4CAF6E', marginBottom: 6 }}>Raw Materials Value</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD2(rawMaterialsValue)}</div>
-          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>{items.filter(i => i.category === 'Raw Materials').length} items in stock</div>
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(92,158,80,0.10) 100%)', border: '1px solid rgba(92,158,80,0.25)', borderRadius: 'var(--r-lg)', padding: '16px 20px' }}>
+          <div className="stat-label" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4CAF6E', marginBottom: 6 }}>Raw Materials Value</div>
+          <div className="stat-value" style={{ fontSize: 26, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD2(rawMaterialsValue)}</div>
+          <div className="stat-subtext" style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>{items.filter(i => i.category === 'Raw Materials').length} items in stock</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(201,168,76,0.10) 100%)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 'var(--r-lg)', padding: '16px 20px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#C9A84C', marginBottom: 6 }}>Packaging Value</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD2(packagingValue)}</div>
-          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>{items.filter(i => i.category === 'Packaging').length} items in stock</div>
+        <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(201,168,76,0.10) 100%)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 'var(--r-lg)', padding: '16px 20px' }}>
+          <div className="stat-label" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#C9A84C', marginBottom: 6 }}>Packaging Value</div>
+          <div className="stat-value" style={{ fontSize: 26, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD2(packagingValue)}</div>
+          <div className="stat-subtext" style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>{items.filter(i => i.category === 'Packaging').length} items in stock</div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(91,155,213,0.10) 100%)', border: '1px solid rgba(91,155,213,0.25)', borderRadius: 'var(--r-lg)', padding: '16px 20px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#5B9BD5', marginBottom: 6 }}>Total Inventory Value</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD2(rawMaterialsValue + packagingValue)}</div>
-          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>Across all categories</div>
+        <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(91,155,213,0.10) 100%)', border: '1px solid rgba(91,155,213,0.25)', borderRadius: 'var(--r-lg)', padding: '16px 20px' }}>
+          <div className="stat-label" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#5B9BD5', marginBottom: 6 }}>Total Inventory Value</div>
+          <div className="stat-value" style={{ fontSize: 26, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD2(rawMaterialsValue + packagingValue)}</div>
+          <div className="stat-subtext" style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>Across all categories</div>
         </div>
       </div>
 
@@ -466,6 +484,11 @@ export default function Inventory() {
           </div>
         </form>
       </Modal>
+
+      {/* Print Only Footer */}
+      <div className="print-only-footer">
+        This inventory report was generated automatically by the GoBites Management System. Confidentially secured.
+      </div>
     </div>
   )
 }

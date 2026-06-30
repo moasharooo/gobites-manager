@@ -68,8 +68,8 @@ def create_expense(data: schemas.ExpenseCreate, db: Session = Depends(get_db), c
 
 @router.put("/{expense_id}", response_model=schemas.ExpenseOut)
 def update_expense(expense_id: int, data: schemas.ExpenseUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can update expenses")
+    if current_user.role not in ["admin", "owner"]:
+        raise HTTPException(status_code=403, detail="Only admins and owners can update expenses")
     expense = db.query(models.Expense).filter(models.Expense.id == expense_id).first()
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
@@ -89,8 +89,8 @@ def update_expense(expense_id: int, data: schemas.ExpenseUpdate, db: Session = D
 
 @router.delete("/{expense_id}")
 def delete_expense(expense_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can delete expenses")
+    if current_user.role not in ["admin", "owner"]:
+        raise HTTPException(status_code=403, detail="Only admins and owners can delete expenses")
     expense = db.query(models.Expense).filter(models.Expense.id == expense_id).first()
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
@@ -105,8 +105,8 @@ def delete_expense(expense_id: int, db: Session = Depends(get_db), current_user:
 
 @router.put("/{expense_id}/approve", response_model=schemas.ExpenseOut)
 def approve_expense(expense_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can approve expenses")
+    if current_user.role not in ["admin", "owner"]:
+        raise HTTPException(status_code=403, detail="Only admins and owners can approve expenses")
     
     expense = db.query(models.Expense).filter(models.Expense.id == expense_id).first()
     if not expense:
@@ -124,8 +124,8 @@ def approve_expense(expense_id: int, db: Session = Depends(get_db), current_user
 
 @router.put("/{expense_id}/reject", response_model=schemas.ExpenseOut)
 def reject_expense(expense_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can reject expenses")
+    if current_user.role not in ["admin", "owner"]:
+        raise HTTPException(status_code=403, detail="Only admins and owners can reject expenses")
     
     expense = db.query(models.Expense).filter(models.Expense.id == expense_id).first()
     if not expense:

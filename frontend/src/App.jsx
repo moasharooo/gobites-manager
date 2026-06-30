@@ -70,7 +70,7 @@ function AppRoutes() {
       <Route path="/customers" element={<ProtectedLayout><Customers /></ProtectedLayout>} />
       <Route path="/marketing" element={user?.role === 'staff' ? <Navigate to="/orders" replace /> : <ProtectedLayout><Marketing /></ProtectedLayout>} />
       <Route path="/reports"   element={user?.role === 'staff' ? <Navigate to="/orders" replace /> : <ProtectedLayout><Reports /></ProtectedLayout>} />
-      <Route path="/users"     element={user?.role === 'staff' ? <Navigate to="/orders" replace /> : <ProtectedLayout><UsersPage /></ProtectedLayout>} />
+      <Route path="/users"     element={user?.role === 'owner' ? <ProtectedLayout><UsersPage /></ProtectedLayout> : <Navigate to={user?.role === 'staff' ? "/orders" : "/"} replace />} />
       <Route path="*"          element={<Navigate to={getHomeRoute()} replace />} />
     </Routes>
   )

@@ -54,6 +54,9 @@ export default function Sidebar({ isOpen, onClose }) {
           if (user?.role === 'staff') {
             return ['/orders', '/expenses', '/customers'].includes(item.to)
           }
+          if (user?.role === 'admin') {
+            return item.to !== '/users'
+          }
           return true
         }).map(({ to, label, icon: Icon }) => (
           <NavLink

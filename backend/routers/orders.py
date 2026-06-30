@@ -210,8 +210,8 @@ def delete_order(order_id: int, db: Session = Depends(get_db), current_user: mod
 
 @router.put("/{order_id}/approve", response_model=schemas.OrderOut)
 def approve_order(order_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can approve orders")
+    if current_user.role not in ["admin", "owner"]:
+        raise HTTPException(status_code=403, detail="Only admins and owners can approve orders")
     
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not order:
@@ -241,8 +241,8 @@ def approve_order(order_id: int, db: Session = Depends(get_db), current_user: mo
 
 @router.put("/{order_id}/reject", response_model=schemas.OrderOut)
 def reject_order(order_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can reject orders")
+    if current_user.role not in ["admin", "owner"]:
+        raise HTTPException(status_code=403, detail="Only admins and owners can reject orders")
     
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not order:

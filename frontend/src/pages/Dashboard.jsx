@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
 import StatCard from '../components/StatCard'
-import { TrendingUp, ShoppingCart, Users, DollarSign, Package, Star, AlertTriangle } from 'lucide-react'
+import { TrendingUp, ShoppingCart, Users, DollarSign, Package, Star, AlertTriangle, Printer } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -42,13 +42,31 @@ export default function Dashboard() {
 
   return (
     <div className="page-container animate-fade">
+      {/* Print Only Header */}
+      <div className="print-only-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <img src="/logo-black.png" alt="GoBites Logo" style={{ height: 45, objectFit: 'contain' }} />
+          <div style={{ textAlign: 'right' }}>
+            <h2 style={{ margin: 0, fontSize: 18, color: '#8B5E3C', fontWeight: 700 }}>GoBites Management System</h2>
+            <p style={{ margin: '2px 0 0 0', fontSize: 11, color: '#7A6858' }}>
+              Document: Business Dashboard | Generated: {new Date().toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">Welcome back — here's your business overview</p>
         </div>
-        <div className="navbar-date">
-          {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button className="btn btn-secondary print-btn" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Printer size={16} /> Print Dashboard
+          </button>
+          <div className="navbar-date">
+            {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
         </div>
       </div>
 
@@ -268,6 +286,11 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Print Only Footer */}
+      <div className="print-only-footer">
+        This business report was generated automatically by the GoBites Management System. Confidentially secured.
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 from database import get_db
 import models, schemas
@@ -10,7 +11,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/login", response_model=schemas.Token)
 def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == data.email).first()
+    user = db.query(models.User).filter(func.lower(models.User.email) == func.lower(data.email)).first()
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token = create_access_token({"sub": user.email})
@@ -19,9 +20,9 @@ def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/register", response_model=schemas.UserOut)
 def register(data: schemas.UserCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can register new users")
-    if db.query(models.User).filter(models.User.email == data.email).first():
+    if current_user.role != "owner":
+        raise HTTPException(status_code=403, detail="Only owner can register new users")
+    if db.query(models.User).filter(func.lower(models.User.email) == func.lower(data.email)).first():
         raise HTTPException(status_code=400, detail="Email already registered")
     user = models.User(
         name=data.name,
@@ -38,15 +39,15 @@ def register(data: schemas.UserCreate, db: Session = Depends(get_db), current_us
 
 @router.get("/users", response_model=List[schemas.UserOut])
 def get_users(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can view the user list")
+    if current_user.role != "owner":
+        raise HTTPException(status_code=403, detail="Only owner can view the user list")
     return db.query(models.User).order_by(models.User.name).all()
 
 
 @router.put("/users/{user_id}", response_model=schemas.UserOut)
 def update_user(user_id: int, data: schemas.UserUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can update users")
+    if current_user.role != "owner":
+        raise HTTPException(status_code=403, detail="Only owner can update users")
     
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -55,7 +56,7 @@ def update_user(user_id: int, data: schemas.UserUpdate, db: Session = Depends(ge
     if data.name is not None:
         user.name = data.name
     if data.email is not None:
-        existing = db.query(models.User).filter(models.User.email == data.email, models.User.id != user_id).first()
+        existing = db.query(models.User).filter(func.lower(models.User.email) == func.lower(data.email), models.User.id != user_id).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
         user.email = data.email
@@ -72,10 +73,10 @@ def update_user(user_id: int, data: schemas.UserUpdate, db: Session = Depends(ge
 
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can delete users")
+    if current_user.role != "owner":
+        raise HTTPException(status_code=403, detail="Only owner can delete users")
     if current_user.id == user_id:
-        raise HTTPException(status_code=400, detail="You cannot delete your own admin account")
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
         
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -90,8 +91,8 @@ def delete_user(user_id: int, db: Session = Depends(get_db), current_user: model
 
 @router.get("/activity-log", response_model=List[schemas.ActivityLogOut])
 def get_activity_log(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can view the activity log")
+    if current_user.role != "owner":
+        raise HTTPException(status_code=403, detail="Only owner can view the activity log")
     
     logs = db.query(models.ActivityLog).order_by(models.ActivityLog.created_at.desc()).all()
     

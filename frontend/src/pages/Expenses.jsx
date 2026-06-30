@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 import Modal from '../components/Modal'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, Search, X, FileSpreadsheet, FileText } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, X, FileSpreadsheet, FileText, Printer } from 'lucide-react'
 import { exportToExcel, exportToPDF } from '../utils/exportUtils'
 import MultiSelect from '../components/MultiSelect'
 
@@ -261,14 +261,27 @@ export default function Expenses() {
 
   return (
     <div className="page-container animate-fade">
+      {/* Print Only Header */}
+      <div className="print-only-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <img src="/logo-black.png" alt="GoBites Logo" style={{ height: 45, objectFit: 'contain' }} />
+          <div style={{ textAlign: 'right' }}>
+            <h2 style={{ margin: 0, fontSize: 18, color: '#8B5E3C', fontWeight: 700 }}>GoBites Management System</h2>
+            <p style={{ margin: '2px 0 0 0', fontSize: 11, color: '#7A6858' }}>
+              Document: Expenses Audit Ledger | Generated: {new Date().toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Expenses</h1>
           {!isStaff && <p className="page-subtitle">This month: <strong className="text-gold">{fmtJD(totalThisMonth)}</strong></p>}
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div className="flex gap-2 print-hide" style={{ alignItems: 'center' }}>
           {/* Month Pickers for Range */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <span className="text-muted" style={{ fontSize: 12 }}>From:</span>
               <input
@@ -297,6 +310,9 @@ export default function Expenses() {
               All Time
             </button>
           )}
+          <button className="btn btn-secondary" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Printer size={16} /> Print Page
+          </button>
           <button id="add-expense-btn" className="btn btn-primary" onClick={openAdd}>
             <Plus size={16} /> Add Expense
           </button>
@@ -305,26 +321,26 @@ export default function Expenses() {
 
       {/* Category Summary Cards */}
       {!isStaff && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 20 }}>
-          <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(201,168,76,0.10) 100%)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#C9A84C', marginBottom: 4 }}>Raw Materials</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD(rawMatTotal)}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{monthItems.filter(i => i.category === 'Raw Materials').length} expenses</div>
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 20 }}>
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(201,168,76,0.10) 100%)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
+            <div className="stat-label" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#C9A84C', marginBottom: 4 }}>Raw Materials</div>
+            <div className="stat-value" style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD(rawMatTotal)}</div>
+            <div className="stat-subtext" style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{monthItems.filter(i => i.category === 'Raw Materials').length} expenses</div>
           </div>
-          <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(91,155,213,0.10) 100%)', border: '1px solid rgba(91,155,213,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#5B9BD5', marginBottom: 4 }}>Packaging</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD(packagingTotal)}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{monthItems.filter(i => i.category === 'Packaging').length} expenses</div>
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(91,155,213,0.10) 100%)', border: '1px solid rgba(91,155,213,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
+            <div className="stat-label" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#5B9BD5', marginBottom: 4 }}>Packaging</div>
+            <div className="stat-value" style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD(packagingTotal)}</div>
+            <div className="stat-subtext" style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{monthItems.filter(i => i.category === 'Packaging').length} expenses</div>
           </div>
-          <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(224,82,82,0.10) 100%)', border: '1px solid rgba(224,82,82,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#E05252', marginBottom: 4 }}>Marketing</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD(marketingTotal)}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{monthItems.filter(i => ['Advertising', 'Photography', 'Marketing'].includes(i.category)).length} expenses</div>
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(224,82,82,0.10) 100%)', border: '1px solid rgba(224,82,82,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
+            <div className="stat-label" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#E05252', marginBottom: 4 }}>Marketing</div>
+            <div className="stat-value" style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD(marketingTotal)}</div>
+            <div className="stat-subtext" style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{monthItems.filter(i => ['Advertising', 'Photography', 'Marketing'].includes(i.category)).length} expenses</div>
           </div>
-          <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(92,158,80,0.10) 100%)', border: '1px solid rgba(92,158,80,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4CAF6E', marginBottom: 4 }}>Total</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD(grandTotal)}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{monthItems.length} expenses</div>
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(92,158,80,0.10) 100%)', border: '1px solid rgba(92,158,80,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
+            <div className="stat-label" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4CAF6E', marginBottom: 4 }}>Total</div>
+            <div className="stat-value" style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text)' }}>{fmtJD(grandTotal)}</div>
+            <div className="stat-subtext" style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{monthItems.length} expenses</div>
           </div>
         </div>
       )}
@@ -545,6 +561,11 @@ export default function Expenses() {
           </div>
         </form>
       </Modal>
+
+      {/* Print Only Footer */}
+      <div className="print-only-footer">
+        This expenses report was generated automatically by the GoBites Management System. Confidentially secured.
+      </div>
     </div>
   )
 }

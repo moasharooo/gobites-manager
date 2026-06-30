@@ -72,17 +72,21 @@ def seed_users():
         staff_email = os.getenv("STAFF_EMAIL", "staff@gobites.co")
         staff_password = os.getenv("STAFF_PASSWORD", "gobites2024")
 
-        # Admin
+        # Admin / Owner
         existing_admin = db.query(models.User).filter(models.User.email == admin_email).first()
         if not existing_admin:
             admin = models.User(
-                name="GoBites Admin",
+                name="GoBites Manager",
                 email=admin_email,
                 password_hash=get_password_hash(admin_password),
-                role="admin"
+                role="owner"
             )
             db.add(admin)
-            print(f"[OK] Default admin created: {admin_email}")
+            print(f"[OK] Default owner created: {admin_email}")
+        else:
+            if existing_admin.role == "admin":
+                existing_admin.role = "owner"
+                print(f"[OK] Upgraded existing admin to owner: {admin_email}")
 
         # Staff
         existing_staff = db.query(models.User).filter(models.User.email == staff_email).first()

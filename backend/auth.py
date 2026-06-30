@@ -54,6 +54,7 @@ def log_activity(db: Session, user_id: int, action: str, details: str):
     try:
         log_entry = models.ActivityLog(user_id=user_id, action=action, details=details)
         db.add(log_entry)
-        db.flush()
+        db.commit()
     except Exception as e:
         print(f"[Error] Failed to log activity: {e}")
+        db.rollback()

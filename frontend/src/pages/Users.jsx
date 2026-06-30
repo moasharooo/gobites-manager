@@ -212,7 +212,10 @@ export default function Users() {
                       <td className="font-bold" style={{ color: 'var(--c-text)' }}>{u.name}</td>
                       <td className="text-muted">{u.email}</td>
                       <td>
-                        <span className={`badge ${u.role === 'admin' ? 'badge-gold' : 'badge-info'}`}>
+                        <span className={`badge ${
+                          u.role === 'owner' ? 'badge-gold' :
+                          u.role === 'admin' ? 'badge-warning' : 'badge-info'
+                        }`}>
                           {u.role.toUpperCase()}
                         </span>
                       </td>
@@ -335,7 +338,8 @@ export default function Users() {
               required
             >
               <option value="staff">Staff (Limited Access)</option>
-              <option value="admin">Manager / Admin (Full Access)</option>
+              <option value="admin">Manager / Admin (Standard Management)</option>
+              <option value="owner">Owner (Full Privileged Access)</option>
             </select>
           </div>
 

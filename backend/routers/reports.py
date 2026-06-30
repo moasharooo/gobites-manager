@@ -188,27 +188,44 @@ def get_dashboard(db: Session = Depends(get_db), _=Depends(get_current_user)):
 
 @router.get("/monthly")
 def get_monthly_report(
-    month: int = Query(default=None),
-    year: int = Query(default=None),
+    month: Optional[int] = Query(default=None),
+    year: Optional[int] = Query(default=None),
+    start_date: Optional[str] = Query(default=None),
+    end_date: Optional[str] = Query(default=None),
     db: Session = Depends(get_db),
     _=Depends(get_current_user)
 ):
     today = date.today()
-    month = month or today.month
-    year = year or today.year
+    m = month or today.month
+    y = year or today.year
 
-    orders = db.query(models.Order).filter(
-        extract('month', models.Order.order_date) == month,
-        extract('year', models.Order.order_date) == year,
-        models.Order.status == "Delivered",
-        models.Order.approval_status == "Approved"
-    ).all()
+    if start_date and end_date:
+        sd = datetime.strptime(start_date, "%Y-%m-%d").date()
+        ed = datetime.strptime(end_date, "%Y-%m-%d").date()
+        
+        orders = db.query(models.Order).filter(
+            models.Order.order_date.between(sd, ed),
+            models.Order.status == "Delivered",
+            models.Order.approval_status == "Approved"
+        ).all()
+        
+        expenses = db.query(models.Expense).filter(
+            models.Expense.date.between(sd, ed),
+            models.Expense.approval_status == "Approved"
+        ).all()
+    else:
+        orders = db.query(models.Order).filter(
+            extract('month', models.Order.order_date) == m,
+            extract('year', models.Order.order_date) == y,
+            models.Order.status == "Delivered",
+            models.Order.approval_status == "Approved"
+        ).all()
 
-    expenses = db.query(models.Expense).filter(
-        extract('month', models.Expense.date) == month,
-        extract('year', models.Expense.date) == year,
-        models.Expense.approval_status == "Approved"
-    ).all()
+        expenses = db.query(models.Expense).filter(
+            extract('month', models.Expense.date) == m,
+            extract('year', models.Expense.date) == y,
+            models.Expense.approval_status == "Approved"
+        ).all()
 
     total_sales = sum(o.total_amount for o in orders)
     total_profit_from_orders = sum(o.net_profit for o in orders)
@@ -233,8 +250,10 @@ def get_monthly_report(
         expense_breakdown[cat] = expense_breakdown.get(cat, 0.0) + e.total_cost
 
     return {
-        "month": month,
-        "year": year,
+        "month": m,
+        "year": y,
+        "start_date": start_date,
+        "end_date": end_date,
         "total_sales": total_sales,
         "total_orders": len(orders),
         "total_expenses": total_expenses,

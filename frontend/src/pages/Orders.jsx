@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 import Modal from '../components/Modal'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, Eye, Search, FileSpreadsheet, FileText, X, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, Eye, Search, FileSpreadsheet, FileText, X, AlertTriangle, Printer } from 'lucide-react'
 import { exportToExcel, exportToPDF } from '../utils/exportUtils'
 
 const STATUS_OPTIONS = ['New', 'Preparing', 'Ready', 'With Delivery', 'Delivered', 'Cancelled']
@@ -284,14 +284,32 @@ export default function Orders() {
 
   return (
     <div className="page-container animate-fade">
+      {/* Print Only Header */}
+      <div className="print-only-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <img src="/logo-black.png" alt="GoBites Logo" style={{ height: 45, objectFit: 'contain' }} />
+          <div style={{ textAlign: 'right' }}>
+            <h2 style={{ margin: 0, fontSize: 18, color: '#8B5E3C', fontWeight: 700 }}>GoBites Management System</h2>
+            <p style={{ margin: '2px 0 0 0', fontSize: 11, color: '#7A6858' }}>
+              Document: Orders Summary & Ledger | Generated: {new Date().toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Orders</h1>
           <p className="page-subtitle">{orders.length} total · {orders.filter(o => o.status === 'Delivered').length} delivered</p>
         </div>
-        <button id="add-order-btn" className="btn btn-primary" onClick={openAdd}>
-          <Plus size={16} /> New Order
-        </button>
+        <div className="flex gap-2 print-hide" style={{ alignItems: 'center' }}>
+          <button className="btn btn-secondary" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Printer size={16} /> Print Page
+          </button>
+          <button id="add-order-btn" className="btn btn-primary" onClick={openAdd}>
+            <Plus size={16} /> New Order
+          </button>
+        </div>
       </div>
 
       {/* Orders Summary Stats (Hidden for Staff) */}
@@ -309,21 +327,21 @@ export default function Orders() {
         const uniqueCustomers = new Set(orders.filter(o => o.customer_id).map(o => o.customer_id)).size
         const totalRevenue = deliveredOrders.reduce((s, o) => s + (+o.total_amount || 0), 0)
         return (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
-            <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(201,168,76,0.12) 100%)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#C9A84C', marginBottom: 4 }}>Boxes Sold</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--c-text)' }}>{totalBoxesSold.toLocaleString()}</div>
-              <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{totalPiecesSold.toLocaleString()} pieces</div>
+          <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(201,168,76,0.12) 100%)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
+              <div className="stat-label" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#C9A84C', marginBottom: 4 }}>Boxes Sold</div>
+              <div className="stat-value" style={{ fontSize: 26, fontWeight: 800, color: 'var(--c-text)' }}>{totalBoxesSold.toLocaleString()}</div>
+              <div className="stat-subtext" style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{totalPiecesSold.toLocaleString()} pieces</div>
             </div>
-            <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(92,158,80,0.12) 100%)', border: '1px solid rgba(92,158,80,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4CAF6E', marginBottom: 4 }}>Unique Customers</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--c-text)' }}>{uniqueCustomers}</div>
-              <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>registered buyers</div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(92,158,80,0.12) 100%)', border: '1px solid rgba(92,158,80,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
+              <div className="stat-label" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4CAF6E', marginBottom: 4 }}>Unique Customers</div>
+              <div className="stat-value" style={{ fontSize: 26, fontWeight: 800, color: 'var(--c-text)' }}>{uniqueCustomers}</div>
+              <div className="stat-subtext" style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>registered buyers</div>
             </div>
-            <div style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(91,155,213,0.12) 100%)', border: '1px solid rgba(91,155,213,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#5B9BD5', marginBottom: 4 }}>Total Revenue</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--c-text)' }}>{fmtJD(totalRevenue)}</div>
-              <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{deliveredOrders.length} orders</div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--c-surface-1) 0%, rgba(91,155,213,0.12) 100%)', border: '1px solid rgba(91,155,213,0.25)', borderRadius: 'var(--r-lg)', padding: '14px 18px' }}>
+              <div className="stat-label" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#5B9BD5', marginBottom: 4 }}>Total Revenue</div>
+              <div className="stat-value" style={{ fontSize: 26, fontWeight: 800, color: 'var(--c-text)' }}>{fmtJD(totalRevenue)}</div>
+              <div className="stat-subtext" style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>{deliveredOrders.length} orders</div>
             </div>
           </div>
         )
@@ -773,6 +791,11 @@ export default function Orders() {
           </div>
         )}
       </Modal>
+
+      {/* Print Only Footer */}
+      <div className="print-only-footer">
+        This orders log report was generated automatically by the GoBites Management System. Confidentially secured.
+      </div>
     </div>
   )
 }
