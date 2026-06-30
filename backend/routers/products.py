@@ -8,8 +8,22 @@ import models, schemas
 router = APIRouter(prefix="/products", tags=["Products"])
 
 
-def _calc_product(product: models.Product):
-    product.total_cost = (product.pieces_count * product.cost_per_piece) + product.packaging_cost
+def _calc_product(product: models.Product, db: Session = None):
+    if db:
+        total_recipe_cost = 0.0
+        recipe_ingredients = db.query(models.ProductRecipeIngredient).filter(
+            models.ProductRecipeIngredient.product_id == product.id
+        ).all()
+        for ri in recipe_ingredients:
+            inv_item = ri.inventory_item
+            if inv_item:
+                total_recipe_cost += ri.quantity_per_piece * (inv_item.unit_cost or 0.0)
+        product.total_cost = total_recipe_cost
+        product.cost_per_piece = total_recipe_cost / (product.pieces_count or 1)
+    else:
+        product.total_cost = product.pieces_count * product.cost_per_piece
+
+    product.packaging_cost = 0.0  # Force packaging cost to 0, computed dynamically at order time
     product.profit = product.selling_price - product.total_cost
     product.profit_margin = (product.profit / product.selling_price * 100) if product.selling_price > 0 else 0.0
 
@@ -100,10 +114,12 @@ def create_product(data: schemas.ProductCreate, db: Session = Depends(get_db), _
     recipe = data.recipe
     product_data = data.model_dump(exclude={"recipe"})
     product = models.Product(**product_data)
-    _calc_product(product)
+    product.packaging_cost = 0.0
     db.add(product)
     db.flush()
     _save_recipe(product, recipe, db)
+    db.flush()
+    _calc_product(product, db)
     db.commit()
     db.refresh(product)
     return _build_product_out(product)
@@ -118,8 +134,10 @@ def update_product(product_id: int, data: schemas.ProductUpdate, db: Session = D
     product_data = data.model_dump(exclude={"recipe"})
     for key, value in product_data.items():
         setattr(product, key, value)
-    _calc_product(product)
+    product.packaging_cost = 0.0
     _save_recipe(product, recipe, db)
+    db.flush()
+    _calc_product(product, db)
     db.commit()
     db.refresh(product)
     return _build_product_out(product)
@@ -173,6 +191,8 @@ def add_recipe_ingredient(product_id: int, data: schemas.RecipeIngredientCreate,
         input_unit=input_unit
     )
     db.add(ri)
+    db.flush()
+    _calc_product(product, db)
     db.commit()
     db.refresh(ri)
     return _build_recipe_ri_out(ri)
@@ -202,7 +222,9 @@ def update_recipe_ingredient(ri_id: int, data: schemas.RecipeIngredientCreate, d
     ri.inventory_item_id = data.inventory_item_id
     ri.quantity_per_piece = qty
     ri.input_unit = input_unit
-
+    db.flush()
+    if ri.product:
+        _calc_product(ri.product, db)
     db.commit()
     db.refresh(ri)
     return _build_recipe_ri_out(ri)
@@ -214,6 +236,10 @@ def delete_recipe_ingredient(ri_id: int, db: Session = Depends(get_db), _=Depend
     ri = db.query(models.ProductRecipeIngredient).filter(models.ProductRecipeIngredient.id == ri_id).first()
     if not ri:
         raise HTTPException(status_code=404, detail="Recipe ingredient not found")
+    product = ri.product
     db.delete(ri)
+    db.flush()
+    if product:
+        _calc_product(product, db)
     db.commit()
     return {"message": "Recipe ingredient deleted"}

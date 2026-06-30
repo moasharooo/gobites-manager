@@ -41,6 +41,7 @@ export default function Orders() {
   const [orders, setOrders] = useState([])
   const [products, setProducts] = useState([])
   const [customers, setCustomers] = useState([])
+  const [inventory, setInventory] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [viewModal, setViewModal] = useState(false)
@@ -74,16 +75,18 @@ export default function Orders() {
 
   const load = async () => {
     try {
-      const [o, p, c, b] = await Promise.all([
+      const [o, p, c, b, inv] = await Promise.all([
         api.get('/orders'),
         api.get('/products'),
         api.get('/customers'),
-        api.get('/production-batches')
+        api.get('/production-batches'),
+        api.get('/inventory')
       ])
       setOrders(o.data)
       setProducts(p.data.filter(pr => pr.is_active))
       setCustomers(c.data)
       setBatches(b.data)
+      setInventory(inv.data)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -102,6 +105,8 @@ export default function Orders() {
       stickers_used: suggestedBags // stickers linked to bags by default
     }))
   }, [form.items, modal])
+
+
 
   const openAdd = () => {
     setForm({
@@ -137,7 +142,15 @@ export default function Orders() {
   }
 
   const subtotal = form.items.reduce((s, it) => s + (+it.quantity || 0) * (+it.unit_price || 0), 0)
-  const packagingCost = form.boxes_used * 0.30 + form.bags_used * 0.25 + form.stickers_used * 0.015
+  const boxItem = inventory.find(i => i.category === 'Packaging' && ['box', 'boxes'].includes(i.name.toLowerCase()))
+  const bagItem = inventory.find(i => i.category === 'Packaging' && ['bag', 'bags'].includes(i.name.toLowerCase()))
+  const stickerItem = inventory.find(i => i.category === 'Packaging' && ['sticker', 'stickers'].includes(i.name.toLowerCase()))
+
+  const boxCost = boxItem ? (boxItem.unit_cost ?? 0.30) : 0.30
+  const bagCost = bagItem ? (bagItem.unit_cost ?? 0.25) : 0.25
+  const stickerCost = stickerItem ? (stickerItem.unit_cost ?? 0.015) : 0.015
+
+  const packagingCost = form.boxes_used * boxCost + form.bags_used * bagCost + form.stickers_used * stickerCost
   const totalAmount = subtotal - (+form.discount || 0) + (+form.delivery_fee || 0)
 
   // Calculate estimated product cost to show profit in modal
@@ -683,11 +696,11 @@ export default function Orders() {
           <div className="form-label" style={{ marginBottom: 12 }}>Packaging Materials Used</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             <div className="form-group">
-              <label className="form-label">Boxes (0.30 JD each)</label>
+              <label className="form-label">Boxes ({boxCost.toFixed(2)} JD each)</label>
               <input className="form-input" type="number" min="0" value={form.boxes_used} onChange={e => setField('boxes_used', +e.target.value || 0)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Bags (0.25 JD each)</label>
+              <label className="form-label">Bags ({bagCost.toFixed(2)} JD each)</label>
               <input className="form-input" type="number" min="0" value={form.bags_used} onChange={e => {
                 const bags = +e.target.value || 0
                 setForm(prev => ({
@@ -698,7 +711,7 @@ export default function Orders() {
               }} />
             </div>
             <div className="form-group">
-              <label className="form-label">Stickers (0.015 JD each)</label>
+              <label className="form-label">Stickers ({stickerCost.toFixed(3)} JD each)</label>
               <input className="form-input" type="number" min="0" value={form.stickers_used} onChange={e => setField('stickers_used', +e.target.value || 0)} />
             </div>
           </div>

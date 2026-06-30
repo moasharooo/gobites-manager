@@ -84,9 +84,9 @@ def seed_users():
             db.add(admin)
             print(f"[OK] Default owner created: {admin_email}")
         else:
-            if existing_admin.role == "admin":
-                existing_admin.role = "owner"
-                print(f"[OK] Upgraded existing admin to owner: {admin_email}")
+            existing_admin.role = "owner"
+            existing_admin.password_hash = get_password_hash(admin_password)
+            print(f"[OK] Owner password updated to match .env and role ensured: {admin_email}")
 
         # Staff
         existing_staff = db.query(models.User).filter(models.User.email == staff_email).first()
@@ -99,64 +99,72 @@ def seed_users():
             )
             db.add(staff)
             print(f"[OK] Default staff created: {staff_email}")
+        else:
+            existing_staff.password_hash = get_password_hash(staff_password)
+            print(f"[OK] Staff password updated to match .env: {staff_email}")
 
         db.commit()
     finally:
         db.close()
 
 
-def seed_packaging():
-    """Ensure default packaging items exist in the database."""
+def cleanup_default_packaging():
+    """Remove default seeded packaging items that the user didn't create."""
     db = SessionLocal()
     try:
-        from sqlalchemy import func
-        # Check Bags
-        bags = db.query(models.InventoryItem).filter(
+        # Delete default seeded Bags
+        db.query(models.InventoryItem).filter(
             models.InventoryItem.category == "Packaging",
-            func.lower(models.InventoryItem.name).in_(["bag", "bags"])
-        ).first()
-        if not bags:
-            db.add(models.InventoryItem(
-                name="Bags",
-                category="Packaging",
-                current_quantity=100.0,
-                unit="pcs",
-                unit_cost=0.25,
-                minimum_quantity=10.0
-            ))
-            
-        # Check Boxes
-        boxes = db.query(models.InventoryItem).filter(
-            models.InventoryItem.category == "Packaging",
-            func.lower(models.InventoryItem.name).in_(["box", "boxes"])
-        ).first()
-        if not boxes:
-            db.add(models.InventoryItem(
-                name="Boxes",
-                category="Packaging",
-                current_quantity=100.0,
-                unit="pcs",
-                unit_cost=0.30,
-                minimum_quantity=10.0
-            ))
+            models.InventoryItem.name == "Bags",
+            models.InventoryItem.current_quantity == 100.0,
+            models.InventoryItem.unit_cost == 0.25
+        ).delete(synchronize_session=False)
 
-        # Check Stickers
-        stickers = db.query(models.InventoryItem).filter(
+        # Delete default seeded Stickers
+        db.query(models.InventoryItem).filter(
             models.InventoryItem.category == "Packaging",
-            func.lower(models.InventoryItem.name).in_(["sticker", "stickers"])
-        ).first()
-        if not stickers:
-            db.add(models.InventoryItem(
-                name="Stickers",
-                category="Packaging",
-                current_quantity=1000.0,
-                unit="pcs",
-                unit_cost=0.015,
-                minimum_quantity=50.0
-            ))
+            models.InventoryItem.name == "Stickers",
+            models.InventoryItem.current_quantity == 1000.0,
+            models.InventoryItem.unit_cost == 0.015
+        ).delete(synchronize_session=False)
+
         db.commit()
+        print("[OK] Cleaned up default seeded packaging items from inventory.")
     except Exception as e:
-        print(f"[Error] Packaging seeding failed: {e}")
+        print(f"[Error] Failed to clean up default packaging: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+def recalculate_all_product_costs():
+    """Recalculate total_cost and cost_per_piece for all products based on their recipes."""
+    db = SessionLocal()
+    try:
+        products = db.query(models.Product).all()
+        for product in products:
+            total_recipe_cost = 0.0
+            has_recipe = False
+            for ri in product.recipe_ingredients:
+                inv_item = ri.inventory_item
+                if inv_item:
+                    has_recipe = True
+                    total_recipe_cost += ri.quantity_per_piece * (inv_item.unit_cost or 0.0)
+            
+            if has_recipe:
+                product.total_cost = total_recipe_cost
+                product.cost_per_piece = total_recipe_cost / (product.pieces_count or 1)
+            else:
+                product.total_cost = product.pieces_count * product.cost_per_piece
+            
+            product.packaging_cost = 0.0
+            product.profit = product.selling_price - product.total_cost
+            product.profit_margin = (product.profit / product.selling_price * 100) if product.selling_price > 0 else 0.0
+        db.commit()
+        print("[OK] Recalculated and repaired all product costs in database.")
+    except Exception as e:
+        print(f"[Error] Failed to recalculate product costs: {e}")
+        db.rollback()
     finally:
         db.close()
 
@@ -164,7 +172,8 @@ def seed_packaging():
 @app.on_event("startup")
 def startup_event():
     seed_users()
-    seed_packaging()
+    cleanup_default_packaging()
+    recalculate_all_product_costs()
     print("[GoBites] Manager API is running!")
 
 

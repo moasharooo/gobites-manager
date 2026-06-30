@@ -76,8 +76,23 @@ def create_order(data: schemas.OrderCreate, db: Session = Depends(get_db), curre
         product = db.query(models.Product).filter(models.Product.id == item_data.product_id).first()
         if not product:
             raise HTTPException(status_code=404, detail=f"Product {item_data.product_id} not found")
+        
+        # Calculate product cost dynamically based on recipe ingredients if they exist
+        current_total_recipe_cost = 0.0
+        has_recipe = False
+        for ri in product.recipe_ingredients:
+            inv_item = ri.inventory_item
+            if inv_item:
+                has_recipe = True
+                current_total_recipe_cost += ri.quantity_per_piece * (inv_item.unit_cost or 0.0)
+        
+        if has_recipe:
+            current_total_cost = current_total_recipe_cost
+        else:
+            current_total_cost = product.total_cost
+
         total_price = item_data.quantity * item_data.unit_price
-        estimated_cost = item_data.quantity * product.total_cost
+        estimated_cost = item_data.quantity * current_total_cost
         profit = total_price - estimated_cost
         subtotal += total_price
         total_cost += estimated_cost

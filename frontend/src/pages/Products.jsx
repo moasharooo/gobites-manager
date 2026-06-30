@@ -155,8 +155,27 @@ export default function Products() {
     }
   }
 
-  const totalCost = (+form.pieces_count || 0) * (+form.cost_per_piece || 0) + (+form.packaging_cost || 0)
-  const profit = (+form.selling_price || 0) - totalCost
+  const getIngredientCost = (r) => {
+    const invItem = inventory.find(inv => inv.id === +r.inventory_item_id)
+    if (!invItem || !r.quantity_per_piece) return 0
+    
+    const baseUnit = invItem.unit || ''
+    const inputUnit = r.input_unit || baseUnit
+    let qty = +r.quantity_per_piece || 0
+    
+    // Convert to base unit
+    if (inputUnit === 'g' && baseUnit === 'kg') {
+      qty = qty / 1000
+    } else if (inputUnit === 'kg' && baseUnit === 'g') {
+      qty = qty * 1000
+    }
+    
+    return qty * (invItem.unit_cost || 0)
+  }
+
+  const calculatedTotalCost = form.recipe.reduce((sum, r) => sum + getIngredientCost(r), 0)
+  const calculatedCostPerPiece = calculatedTotalCost / (+form.pieces_count || 1)
+  const profit = (+form.selling_price || 0) - calculatedTotalCost
   const margin = form.selling_price > 0 ? (profit / +form.selling_price * 100) : 0
 
   const handleSave = async e => {
@@ -169,8 +188,8 @@ export default function Products() {
         ...form,
         pieces_count: +form.pieces_count,
         selling_price: +form.selling_price,
-        cost_per_piece: +form.cost_per_piece,
-        packaging_cost: +form.packaging_cost,
+        cost_per_piece: 0,
+        packaging_cost: 0,
         recipe: form.recipe
           .filter(r => r.inventory_item_id && r.quantity_per_piece)
           .map(r => ({
@@ -304,20 +323,13 @@ export default function Products() {
                 <label className="form-label">Selling Price (JD) *</label>
                 <input id="prod-price" className="form-input" type="number" step="0.01" min="0" value={form.selling_price} onChange={e => setField('selling_price', e.target.value)} required />
               </div>
-              <div className="form-group">
-                <label className="form-label">Cost Per Piece (JD)</label>
-                <input id="prod-cost-per-piece" className="form-input" type="number" step="0.01" min="0" value={form.cost_per_piece} onChange={e => setField('cost_per_piece', e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Packaging Cost (JD)</label>
-                <input id="prod-pkg-cost" className="form-input" type="number" step="0.01" min="0" value={form.packaging_cost} onChange={e => setField('packaging_cost', e.target.value)} />
-              </div>
             </div>
 
-            <div style={{ background: 'var(--c-surface-2)', borderRadius: 'var(--r-md)', padding: '16px', marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-              <div><div className="form-label">Total Cost</div><div className="font-bold">{fmtJD(totalCost)}</div></div>
-              <div><div className="form-label">Profit</div><div className={`font-bold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>{fmtJD(profit)}</div></div>
-              <div><div className="form-label">Margin</div><div className={`font-bold ${margin >= 20 ? 'text-success' : margin >= 10 ? 'text-warning' : 'text-danger'}`}>{margin.toFixed(1)}%</div></div>
+            <div style={{ background: 'var(--c-surface-2)', borderRadius: 'var(--r-md)', padding: '16px', marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <div><div className="form-label" style={{ fontSize: 11 }}>Cost/Piece</div><div className="font-bold">{fmtJD(calculatedCostPerPiece)}</div></div>
+              <div><div className="form-label" style={{ fontSize: 11 }}>Box Food Cost</div><div className="font-bold">{fmtJD(calculatedTotalCost)}</div></div>
+              <div><div className="form-label" style={{ fontSize: 11 }}>Profit</div><div className={`font-bold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>{fmtJD(profit)}</div></div>
+              <div><div className="form-label" style={{ fontSize: 11 }}>Margin</div><div className={`font-bold ${margin >= 20 ? 'text-success' : margin >= 10 ? 'text-warning' : 'text-danger'}`}>{margin.toFixed(1)}%</div></div>
             </div>
 
             <div className="form-group mt-4">

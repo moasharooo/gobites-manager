@@ -26,9 +26,22 @@ def _adjust_inventory_for_expense(db: Session, expense: models.Expense, old_qty:
         qty_diff = -expense.quantity
 
     if inv_item:
-        inv_item.current_quantity = max(0.0, inv_item.current_quantity + qty_diff)
         if action in ("create", "update") and expense.quantity > 0:
-            inv_item.unit_cost = expense.total_cost / expense.quantity
+            # Weighted average unit cost calculation
+            old_qty_in_stock = inv_item.current_quantity
+            if action == "update":
+                old_qty_in_stock = max(0.0, old_qty_in_stock - old_qty)
+            
+            old_total_val = old_qty_in_stock * (inv_item.unit_cost or 0.0)
+            new_total_val = old_total_val + expense.total_cost
+            new_qty = old_qty_in_stock + expense.quantity
+            
+            if new_qty > 0:
+                inv_item.unit_cost = new_total_val / new_qty
+            else:
+                inv_item.unit_cost = expense.total_cost / expense.quantity
+
+        inv_item.current_quantity = max(0.0, inv_item.current_quantity + qty_diff)
         if expense.unit:
             inv_item.unit = expense.unit
     elif action in ("create", "update") and qty_diff > 0:

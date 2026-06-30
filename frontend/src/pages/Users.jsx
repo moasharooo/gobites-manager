@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 import Modal from '../components/Modal'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, Search, X, ShieldAlert, History, Users as UsersIcon } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, X, ShieldAlert, History, Users as UsersIcon, Clock } from 'lucide-react'
 
 const emptyForm = { name: '', email: '', password: '', role: 'staff' }
 
@@ -11,7 +11,7 @@ export default function Users() {
   const { user } = useAuth()
   const [users, setUsers] = useState([])
   const [logs, setLogs] = useState([])
-  const [activeTab, setActiveTab] = useState('users') // 'users' or 'logs'
+  const [activeTab, setActiveTab] = useState('users') // 'users', 'logs', or 'logins'
   const [loading, setLoading] = useState(true)
   const [logsLoading, setLogsLoading] = useState(false)
   const [modal, setModal] = useState(false)
@@ -19,6 +19,8 @@ export default function Users() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   const loadUsers = () => {
     setLoading(true)
@@ -119,11 +121,31 @@ export default function Users() {
     u.role?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const filteredLogs = logs.filter(log =>
-    log.user_name?.toLowerCase().includes(search.toLowerCase()) ||
-    log.action?.toLowerCase().includes(search.toLowerCase()) ||
-    log.details?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredLogs = logs.filter(log => {
+    const matchesSearch = 
+      log.user_name?.toLowerCase().includes(search.toLowerCase()) ||
+      log.action?.toLowerCase().includes(search.toLowerCase()) ||
+      log.details?.toLowerCase().includes(search.toLowerCase())
+    if (!matchesSearch) return false
+
+    const logDate = log.created_at ? log.created_at.split('T')[0] : ''
+    if (dateFrom && logDate < dateFrom) return false
+    if (dateTo && logDate > dateTo) return false
+    return true
+  })
+
+  const filteredLogins = logs.filter(log => {
+    if (log.action !== 'LOGIN') return false
+    const matchesSearch = 
+      log.user_name?.toLowerCase().includes(search.toLowerCase()) ||
+      log.details?.toLowerCase().includes(search.toLowerCase())
+    if (!matchesSearch) return false
+
+    const logDate = log.created_at ? log.created_at.split('T')[0] : ''
+    if (dateFrom && logDate < dateFrom) return false
+    if (dateTo && logDate > dateTo) return false
+    return true
+  })
 
   const getActionBadgeClass = (action) => {
     if (action.startsWith('APPROVE_')) return 'badge-success'
@@ -141,7 +163,9 @@ export default function Users() {
           <p className="page-subtitle">
             {activeTab === 'users' 
               ? `${users.length} active platform accounts`
-              : `${logs.length} audit log entries registered`
+              : activeTab === 'logs'
+                ? `${logs.length} audit log entries registered`
+                : `${filteredLogins.length} login events recorded`
             }
           </p>
         </div>
@@ -168,11 +192,18 @@ export default function Users() {
         >
           <History size={16} /> Activity Audit Log
         </button>
+        <button 
+          className={`btn ${activeTab === 'logins' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => { setActiveTab('logins'); setSearch(''); }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <Clock size={16} /> Login History
+        </button>
       </div>
 
       <div className="card">
-        <div className="card-header">
-          <div className="search-bar">
+        <div className="card-header" style={{ flexWrap: 'wrap', gap: 12 }}>
+          <div className="search-bar" style={{ minWidth: 240 }}>
             <Search size={14} color="var(--c-text-3)" />
             <input
               id="user-search"
@@ -181,8 +212,40 @@ export default function Users() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <span className="text-muted" style={{ fontSize: 13 }}>
-            {activeTab === 'users' ? filteredUsers.length : filteredLogs.length} items
+
+          {activeTab !== 'users' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <input
+                type="date"
+                className="form-input"
+                style={{ padding: '6px 12px', fontSize: 13, width: 140, height: 36 }}
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                placeholder="From Date"
+              />
+              <span style={{ color: 'var(--c-text-3)', fontSize: 12 }}>to</span>
+              <input
+                type="date"
+                className="form-input"
+                style={{ padding: '6px 12px', fontSize: 13, width: 140, height: 36 }}
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                placeholder="To Date"
+              />
+              {(dateFrom || dateTo) && (
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => { setDateFrom(''); setDateTo(''); }}
+                  style={{ color: 'var(--c-danger)', fontSize: 12, padding: '4px 8px' }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
+
+          <span className="text-muted" style={{ fontSize: 13, marginLeft: 'auto' }}>
+            {activeTab === 'users' ? filteredUsers.length : activeTab === 'logs' ? filteredLogs.length : filteredLogins.length} items
           </span>
         </div>
 
@@ -249,7 +312,7 @@ export default function Users() {
                 </tbody>
               </table>
             )
-          ) : (
+          ) : activeTab === 'logs' ? (
             logsLoading ? (
               <div className="loading-page" style={{ height: 200 }}><div className="spinner" /></div>
             ) : filteredLogs.length === 0 ? (
@@ -279,6 +342,34 @@ export default function Users() {
                       <td className="text-muted" style={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {log.details}
                       </td>
+                      <td className="text-muted">{new Date(log.created_at).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          ) : (
+            logsLoading ? (
+              <div className="loading-page" style={{ height: 200 }}><div className="spinner" /></div>
+            ) : filteredLogins.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">🔑</div>
+                <div className="empty-state-title">No login history recorded yet</div>
+              </div>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Details</th>
+                    <th>Date & Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLogins.map(log => (
+                    <tr key={log.id}>
+                      <td className="font-bold" style={{ color: 'var(--c-text)' }}>{log.user_name}</td>
+                      <td className="text-muted">{log.details}</td>
                       <td className="text-muted">{new Date(log.created_at).toLocaleString()}</td>
                     </tr>
                   ))}
