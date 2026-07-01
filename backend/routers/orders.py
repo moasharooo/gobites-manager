@@ -60,7 +60,7 @@ def _serialize_order(order: models.Order, db: Session) -> schemas.OrderOut:
 
 @router.get("", response_model=List[schemas.OrderOut])
 def get_orders(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    orders = db.query(models.Order).order_by(models.Order.order_date.desc()).all()
+    orders = db.query(models.Order).order_by(models.Order.order_date.desc(), models.Order.id.desc()).all()
     return [_serialize_order(o, db) for o in orders]
 
 

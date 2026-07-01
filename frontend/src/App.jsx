@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -55,6 +55,14 @@ function ProtectedLayout({ children }) {
 
 function AppRoutes() {
   const { isAuthenticated, user } = useAuth()
+
+  useEffect(() => {
+    if (user && user.role !== 'owner') {
+      document.body.style.setProperty('--print-watermark', `"${user.name} - Printed"`);
+    } else {
+      document.body.style.setProperty('--print-watermark', '""');
+    }
+  }, [user])
   
   const getHomeRoute = () => user?.role === 'staff' ? '/orders' : '/'
 

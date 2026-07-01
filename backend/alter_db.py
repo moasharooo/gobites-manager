@@ -18,6 +18,18 @@ try:
 except sqlite3.OperationalError as e:
     print(f"expenses table alter error: {e}")
 
+try:
+    cursor.execute("ALTER TABLE users ADD COLUMN phone VARCHAR(50)")
+    print("Added phone to users")
+except sqlite3.OperationalError as e:
+    print(f"users phone alter error: {e}")
+
+try:
+    cursor.execute("ALTER TABLE users ADD COLUMN financial_advances FLOAT DEFAULT 0.0")
+    print("Added financial_advances to users")
+except sqlite3.OperationalError as e:
+    print(f"users financial_advances alter error: {e}")
+
 conn.commit()
 conn.close()
 print("Done")

@@ -1222,7 +1222,7 @@ tbody tr:hover { background: var(--c-surface-2); }
     box-shadow: none !important;
     color: #2E1E14 !important;
     margin-bottom: 20px !important;
-    page-break-inside: avoid !important;
+    page-break-inside: auto !important;
   }
   .card-header {
     border-bottom: 1px solid #E5DEC9 !important;
@@ -1325,5 +1325,28 @@ tbody tr:hover { background: var(--c-surface-2); }
     background: #FFF8E1 !important;
     color: #F57F17 !important;
     border-color: #FFE082 !important;
+  }
+
+  /* Table cells wrapping & fit */
+  table th, table td {
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  /* Page Print Watermark */
+  body::before {
+    content: var(--print-watermark, "");
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    font-size: 5rem;
+    font-weight: 800;
+    color: rgba(0, 0, 0, 0.035) !important;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999999;
+    user-select: none;
+    font-family: sans-serif;
   }
 }

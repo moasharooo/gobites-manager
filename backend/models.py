@@ -83,6 +83,8 @@ class User(Base):
     email = Column(String(200), unique=True, nullable=False, index=True)
     password_hash = Column(String(256), nullable=False)
     role = Column(String(20), default="admin")
+    phone = Column(String(50), nullable=True)
+    financial_advances = Column(Float, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -2,6 +2,37 @@ import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
+function getUserWatermarkCSS() {
+  try {
+    const userStr = localStorage.getItem('gobites_user')
+    if (userStr) {
+      const userObj = JSON.parse(userStr)
+      if (userObj.role !== 'owner' && userObj.name) {
+        return `
+          body::before {
+            content: "${userObj.name} - Printed";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 5rem;
+            font-weight: 800;
+            color: rgba(0, 0, 0, 0.035) !important;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 999999;
+            user-select: none;
+            font-family: sans-serif;
+          }
+        `
+      }
+    }
+  } catch (err) {
+    console.error('Failed to parse user for watermark:', err)
+  }
+  return ''
+}
+
 /**
  * Export data to Excel (.xlsx)
  * @param {Array} data - Array of plain objects
@@ -127,7 +158,7 @@ export function exportToPDF(data, columns, filename = 'export', title = 'Report'
             padding: 10px 12px;
             font-size: 11px;
             font-weight: 700;
-            white-space: nowrap;
+            white-space: normal;
           }
           
           td {
@@ -135,7 +166,8 @@ export function exportToPDF(data, columns, filename = 'export', title = 'Report'
             border-bottom: 1px solid #E5DEC9;
             font-size: 11px;
             color: #3D2819;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
           }
           
           tr:nth-child(even) {
@@ -196,6 +228,7 @@ export function exportToPDF(data, columns, filename = 'export', title = 'Report'
               size: auto;
               margin: 15mm 10mm 15mm 10mm;
             }
+            ${getUserWatermarkCSS()}
           }
         </style>
       </head>
@@ -350,14 +383,15 @@ export function exportCustomerOrdersPDF(customer, orders) {
             padding: 10px 12px;
             font-size: 11px;
             font-weight: 700;
-            white-space: nowrap;
+            white-space: normal;
           }
           td {
             padding: 10px 12px;
             border-bottom: 1px solid #E5DEC9;
             font-size: 11px;
             color: #3D2819;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
           }
           tr:nth-child(even) { background-color: #FDFBF7; }
           
@@ -399,6 +433,7 @@ export function exportCustomerOrdersPDF(customer, orders) {
             body { padding: 0; }
             .no-print-bar { display: none !important; }
             @page { size: auto; margin: 15mm 10mm 15mm 10mm; }
+            ${getUserWatermarkCSS()}
           }
         </style>
       </head>

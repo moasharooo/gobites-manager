@@ -61,7 +61,7 @@ def _adjust_inventory_for_expense(db: Session, expense: models.Expense, old_qty:
 
 @router.get("", response_model=List[schemas.ExpenseOut])
 def get_expenses(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    return db.query(models.Expense).order_by(models.Expense.date.desc()).all()
+    return db.query(models.Expense).order_by(models.Expense.date.desc(), models.Expense.id.desc()).all()
 
 
 @router.post("", response_model=schemas.ExpenseOut)

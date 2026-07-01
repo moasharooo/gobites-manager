@@ -11,7 +11,7 @@ router = APIRouter(prefix="/customers", tags=["Customers"])
 
 @router.get("", response_model=List[schemas.CustomerOut])
 def get_customers(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    customers = db.query(models.Customer).all()
+    customers = db.query(models.Customer).order_by(models.Customer.created_at.desc(), models.Customer.id.desc()).all()
     result = []
     for c in customers:
         out = schemas.CustomerOut(

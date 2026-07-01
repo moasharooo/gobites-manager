@@ -5,7 +5,7 @@ import Modal from '../components/Modal'
 import toast from 'react-hot-toast'
 import { Plus, Pencil, Trash2, Search, X, ShieldAlert, History, Users as UsersIcon, Clock } from 'lucide-react'
 
-const emptyForm = { name: '', email: '', password: '', role: 'staff' }
+const emptyForm = { name: '', email: '', password: '', role: 'staff', phone: '', financial_advances: 0 }
 
 export default function Users() {
   const { user } = useAuth()
@@ -60,7 +60,14 @@ export default function Users() {
 
   const openEdit = u => {
     setEditing(u)
-    setForm({ name: u.name, email: u.email, password: '', role: u.role })
+    setForm({
+      name: u.name,
+      email: u.email,
+      password: '',
+      role: u.role,
+      phone: u.phone || '',
+      financial_advances: u.financial_advances || 0
+    })
     setModal(true)
   }
 
@@ -75,7 +82,9 @@ export default function Users() {
         const payload = {
           name: form.name,
           email: form.email,
-          role: form.role
+          role: form.role,
+          phone: form.phone,
+          financial_advances: +form.financial_advances || 0
         }
         if (form.password.trim() !== '') {
           payload.password = form.password
@@ -135,7 +144,7 @@ export default function Users() {
   })
 
   const filteredLogins = logs.filter(log => {
-    if (log.action !== 'LOGIN') return false
+    if (log.action !== 'LOGIN' && log.action !== 'LOGOUT') return false
     const matchesSearch = 
       log.user_name?.toLowerCase().includes(search.toLowerCase()) ||
       log.details?.toLowerCase().includes(search.toLowerCase())
@@ -264,7 +273,9 @@ export default function Users() {
                   <tr>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Phone</th>
                     <th>Role</th>
+                    <th>Advances</th>
                     <th>Created At</th>
                     <th>Actions</th>
                   </tr>
@@ -274,6 +285,7 @@ export default function Users() {
                     <tr key={u.id}>
                       <td className="font-bold" style={{ color: 'var(--c-text)' }}>{u.name}</td>
                       <td className="text-muted">{u.email}</td>
+                      <td className="text-muted">{u.phone || '-'}</td>
                       <td>
                         <span className={`badge ${
                           u.role === 'owner' ? 'badge-gold' :
@@ -282,6 +294,7 @@ export default function Users() {
                           {u.role.toUpperCase()}
                         </span>
                       </td>
+                      <td className="font-bold text-danger">{u.financial_advances ? `${u.financial_advances.toFixed(2)} JD` : '0.00 JD'}</td>
                       <td className="text-muted">{new Date(u.created_at).toLocaleDateString()}</td>
                       <td>
                         <div className="flex gap-2">
@@ -361,6 +374,7 @@ export default function Users() {
                 <thead>
                   <tr>
                     <th>User</th>
+                    <th>Event</th>
                     <th>Details</th>
                     <th>Date & Time</th>
                   </tr>
@@ -369,6 +383,11 @@ export default function Users() {
                   {filteredLogins.map(log => (
                     <tr key={log.id}>
                       <td className="font-bold" style={{ color: 'var(--c-text)' }}>{log.user_name}</td>
+                      <td>
+                        <span className={`badge ${log.action === 'LOGIN' ? 'badge-success' : 'badge-danger'}`}>
+                          {log.action}
+                        </span>
+                      </td>
                       <td className="text-muted">{log.details}</td>
                       <td className="text-muted">{new Date(log.created_at).toLocaleString()}</td>
                     </tr>
@@ -446,6 +465,32 @@ export default function Users() {
               value={form.password}
               onChange={e => setField('password', e.target.value)}
               required={!editing}
+            />
+          </div>
+
+          <div className="form-group mt-4">
+            <label className="form-label">Phone Number</label>
+            <input
+              id="user-phone-input"
+              className="form-input"
+              type="text"
+              placeholder="e.g. +962 79 123 4567"
+              value={form.phone}
+              onChange={e => setField('phone', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group mt-4">
+            <label className="form-label">Financial Advances / Drawn Amount (JD)</label>
+            <input
+              id="user-advances-input"
+              className="form-input"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="e.g. 150.00"
+              value={form.financial_advances}
+              onChange={e => setField('financial_advances', e.target.value)}
             />
           </div>
 

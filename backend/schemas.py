@@ -10,18 +10,24 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     role: str = "admin"
+    phone: Optional[str] = None
+    financial_advances: Optional[float] = 0.0
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     role: Optional[str] = None
+    phone: Optional[str] = None
+    financial_advances: Optional[float] = None
 
 class UserOut(BaseModel):
     id: int
     name: str
     email: str
     role: str
+    phone: Optional[str] = None
+    financial_advances: float
     created_at: datetime
     class Config:
         from_attributes = True

@@ -19,6 +19,12 @@ def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer", "user": user}
 
 
+@router.post("/logout")
+def logout(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    log_activity(db, current_user.id, "LOGOUT", f"{current_user.name} logged out")
+    return {"message": "Logged out successfully"}
+
+
 @router.post("/register", response_model=schemas.UserOut)
 def register(data: schemas.UserCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     if current_user.role != "owner":
@@ -29,7 +35,9 @@ def register(data: schemas.UserCreate, db: Session = Depends(get_db), current_us
         name=data.name,
         email=data.email,
         password_hash=get_password_hash(data.password),
-        role=data.role
+        role=data.role,
+        phone=data.phone,
+        financial_advances=data.financial_advances or 0.0
     )
     db.add(user)
     db.commit()
@@ -63,6 +71,10 @@ def update_user(user_id: int, data: schemas.UserUpdate, db: Session = Depends(ge
         user.email = data.email
     if data.role is not None:
         user.role = data.role
+    if data.phone is not None:
+        user.phone = data.phone
+    if data.financial_advances is not None:
+        user.financial_advances = data.financial_advances
     if data.password is not None and data.password.strip() != "":
         user.password_hash = get_password_hash(data.password)
         
