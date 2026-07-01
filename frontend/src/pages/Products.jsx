@@ -302,7 +302,7 @@ export default function Products() {
           ))}
         </div>
 
-        <form id="product-form" onSubmit={handleSave}>
+        <form id="product-form" onSubmit={handleSave} noValidate>
 
           {/* ── DETAILS TAB ─────────────────────────────────────────── */}
           <div style={{ display: activeTab === 'details' ? 'block' : 'none' }}>
@@ -321,7 +321,7 @@ export default function Products() {
               </div>
               <div className="form-group">
                 <label className="form-label">Selling Price (JD) *</label>
-                <input id="prod-price" className="form-input" type="number" step="0.01" min="0" value={form.selling_price} onChange={e => setField('selling_price', e.target.value)} required />
+                <input id="prod-price" className="form-input" type="number" step="1" min="0" value={form.selling_price} onChange={e => setField('selling_price', e.target.value)} required />
               </div>
             </div>
 

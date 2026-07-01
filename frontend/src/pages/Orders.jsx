@@ -535,7 +535,7 @@ export default function Orders() {
           </>
         }
       >
-        <form id="order-form" onSubmit={handleSave}>
+        <form id="order-form" onSubmit={handleSave} noValidate>
           <div className="form-grid">
             <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label">Customer</label>
@@ -661,7 +661,7 @@ export default function Orders() {
               </div>
               <div className="form-group">
                 <label className="form-label">Unit Price (JD)</label>
-                <input className="form-input" type="number" step="0.01" min="0" value={item.unit_price} onChange={e => setItemField(i, 'unit_price', e.target.value)} required />
+                <input className="form-input" type="number" step="1" min="0" value={item.unit_price} onChange={e => setItemField(i, 'unit_price', e.target.value)} required />
               </div>
               <button type="button" className="btn btn-danger btn-sm btn-icon" onClick={() => removeItem(i)} style={{ marginBottom: 0 }}><Trash2 size={14} /></button>
             </div>
@@ -697,11 +697,11 @@ export default function Orders() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             <div className="form-group">
               <label className="form-label">Boxes ({boxCost.toFixed(2)} JD each)</label>
-              <input className="form-input" type="number" min="0" value={form.boxes_used} onChange={e => setField('boxes_used', +e.target.value || 0)} />
+              <input className="form-input" type="number" step="1" min="0" value={form.boxes_used} onChange={e => setField('boxes_used', +e.target.value || 0)} />
             </div>
             <div className="form-group">
               <label className="form-label">Bags ({bagCost.toFixed(2)} JD each)</label>
-              <input className="form-input" type="number" min="0" value={form.bags_used} onChange={e => {
+              <input className="form-input" type="number" step="1" min="0" value={form.bags_used} onChange={e => {
                 const bags = +e.target.value || 0
                 setForm(prev => ({
                   ...prev,
@@ -712,7 +712,7 @@ export default function Orders() {
             </div>
             <div className="form-group">
               <label className="form-label">Stickers ({stickerCost.toFixed(3)} JD each)</label>
-              <input className="form-input" type="number" min="0" value={form.stickers_used} onChange={e => setField('stickers_used', +e.target.value || 0)} />
+              <input className="form-input" type="number" step="1" min="0" value={form.stickers_used} onChange={e => setField('stickers_used', +e.target.value || 0)} />
             </div>
           </div>
 
@@ -720,11 +720,11 @@ export default function Orders() {
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">Discount (JD)</label>
-              <input id="order-discount" className="form-input" type="number" step="0.01" min="0" value={form.discount} onChange={e => setField('discount', e.target.value)} />
+              <input id="order-discount" className="form-input" type="number" step="1" min="0" value={form.discount} onChange={e => setField('discount', e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Delivery Fee (JD)</label>
-              <input id="order-delivery" className="form-input" type="number" step="0.01" min="0" value={form.delivery_fee} onChange={e => setField('delivery_fee', e.target.value)} />
+              <input id="order-delivery" className="form-input" type="number" step="1" min="0" value={form.delivery_fee} onChange={e => setField('delivery_fee', e.target.value)} />
             </div>
           </div>
 

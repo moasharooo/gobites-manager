@@ -460,7 +460,7 @@ export default function Expenses() {
           </>
         }
       >
-        <form id="expense-form" onSubmit={handleSave}>
+        <form id="expense-form" onSubmit={handleSave} noValidate>
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">Date *</label>
@@ -532,7 +532,7 @@ export default function Expenses() {
           <div className="form-grid mt-4">
             <div className="form-group">
               <label className="form-label">Quantity</label>
-              <input id="expense-qty" className="form-input" type="number" step="0.01" min="0" value={form.quantity} onChange={e => setField('quantity', e.target.value)} />
+              <input id="expense-qty" className="form-input" type="number" step="1" min="0" value={form.quantity} onChange={e => setField('quantity', e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Unit</label>
@@ -540,7 +540,7 @@ export default function Expenses() {
             </div>
             <div className="form-group">
               <label className="form-label">Total Cost (JD) *</label>
-              <input id="expense-cost" className="form-input" type="number" step="0.01" min="0" placeholder="0.00" value={form.total_cost} onChange={e => setField('total_cost', e.target.value)} required />
+              <input id="expense-cost" className="form-input" type="number" step="1" min="0" placeholder="0.00" value={form.total_cost} onChange={e => setField('total_cost', e.target.value)} required />
             </div>
           </div>
           <div className="form-grid mt-4">

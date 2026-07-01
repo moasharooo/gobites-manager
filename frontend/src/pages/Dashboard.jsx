@@ -72,16 +72,21 @@ export default function Dashboard() {
 
       {/* KPI Stats */}
       <div className="stats-grid">
+        {/* Row 1: Current Month & Today's Financials */}
         <StatCard label="Today's Sales"    value={fmtJD(data.today_sales)}    sub={`${data.today_orders} orders`}     accent="gold"  icon={DollarSign} />
         <StatCard label="Month Sales"      value={fmtJD(data.month_sales)}    sub={`${data.month_orders} orders`}     accent="green" icon={TrendingUp} />
-        <StatCard label="Net Profit"       value={fmtJD(data.net_profit)}     sub="Sales − Expenses"                  accent={data.net_profit >= 0 ? 'green' : 'red'} icon={Star} />
         <StatCard label="Month Expenses"   value={fmtJD(data.month_expenses)} sub="This month"                        accent="red"   icon={ShoppingCart} />
-        <StatCard label="Total Customers"  value={data.total_customers}       sub="Registered"                        accent="blue"  icon={Users} />
-        <StatCard label="Chocolates Stock"  value={`${data.total_pieces_in_stock || 0} pcs`} sub="Across active products"          accent="gold"  icon={Package} />
-        <StatCard label="Best Product"     value={data.best_product || '—'}   sub="Most sold this month"              accent="" />
-        <StatCard label="Top Customer"     value={data.top_customer || '—'}   sub="Highest purchases"                 accent="" />
-        <StatCard label="Low Stock Items"  value={data.low_stock_alerts.length} sub="Need restock"                    accent={data.low_stock_alerts.length > 0 ? 'red' : 'green'} icon={Package} />
+        <StatCard label="Month Profit (Net)" value={fmtJD(data.net_profit)} sub={`Sales: ${fmtJD(data.month_sales)} | Exp: ${fmtJD(data.month_expenses)}`} accent={data.net_profit >= 0 ? 'green' : 'red'} icon={Star} />
+
+        {/* Row 2: Lifespan & Totals */}
+        <StatCard label="All-Time Profit (Net)" value={fmtJD(data.all_time_net_profit)} sub={`Sales: ${fmtJD(data.all_time_sales)} | Exp: ${fmtJD(data.all_time_expenses)}`} accent={data.all_time_net_profit >= 0 ? 'green' : 'red'} icon={TrendingUp} />
         <StatCard label="Total Boxes Sold"  value={(data.total_boxes_sold || 0).toLocaleString()} sub={`${(data.total_pieces_sold || 0).toLocaleString()} pieces`} accent="gold" icon={Package} />
+        <StatCard label="Total Customers"  value={data.total_customers}       sub="Registered"                        accent="blue"  icon={Users} />
+        <StatCard label="Top Customer"     value={data.top_customer || '—'}   sub="Highest purchases"                 accent=""      icon={Users} />
+
+        {/* Row 3: Operations & Warehouse */}
+        <StatCard label="Chocolates Stock"  value={`${data.total_pieces_in_stock || 0} pcs`} sub="Across active products"          accent="gold"  icon={Package} />
+        <StatCard label="Low Stock Items"  value={data.low_stock_alerts.length} sub="Need restock"                    accent={data.low_stock_alerts.length > 0 ? 'red' : 'green'} icon={Package} />
       </div>
 
       {/* ── Critical Stock Warning ─────────────────────────────────────── */}

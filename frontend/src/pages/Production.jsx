@@ -322,7 +322,7 @@ export default function Production() {
           </>
         }
       >
-        <form id="batch-form" onSubmit={handleSave}>
+        <form id="batch-form" onSubmit={handleSave} noValidate>
 
           {/* ── Basic Info ────────────────────────────────────────── */}
           <div className="form-grid">
@@ -393,11 +393,11 @@ export default function Production() {
             </div>
             <div className="form-group">
               <label className="form-label">Packaging Cost (JD)</label>
-              <input id="batch-pkg" className="form-input" type="number" step="0.01" min="0" value={form.packaging_cost} onChange={e => setField('packaging_cost', e.target.value)} />
+              <input id="batch-pkg" className="form-input" type="number" step="1" min="0" value={form.packaging_cost} onChange={e => setField('packaging_cost', e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Labor Cost (JD)</label>
-              <input id="batch-labor" className="form-input" type="number" step="0.01" min="0" value={form.labor_cost} onChange={e => setField('labor_cost', e.target.value)} />
+              <input id="batch-labor" className="form-input" type="number" step="1" min="0" value={form.labor_cost} onChange={e => setField('labor_cost', e.target.value)} />
             </div>
           </div>
 
@@ -521,7 +521,7 @@ export default function Production() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Qty Used</label>
-                    <input className="form-input" type="number" step="0.01" min="0" value={ing.quantity_used} onChange={e => setIngField(i, 'quantity_used', e.target.value)} required />
+                    <input className="form-input" type="number" step="1" min="0" value={ing.quantity_used} onChange={e => setIngField(i, 'quantity_used', e.target.value)} required />
                   </div>
                   <button type="button" className="btn btn-danger btn-sm btn-icon" onClick={() => removeIngredient(i)} style={{ marginBottom: 0 }}><Trash2 size={14} /></button>
                 </div>

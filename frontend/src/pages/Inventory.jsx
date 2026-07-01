@@ -59,8 +59,12 @@ const EXPORT_COLUMNS = [
 const emptyForm = { name: 'Chocolate', category: 'Raw Materials', current_quantity: 0, unit: 'kg', unit_cost: 0, minimum_quantity: 0, supplier: '', purchase_date: '', expiry_date: '' }
 
 const fmtJD = v => `${(+v || 0).toFixed(2)} JD`
-
 const fmtJD2 = v => `${(+v || 0).toFixed(2)} JD`
+
+const formatQty = v => {
+  if (v == null || isNaN(v)) return '0'
+  return Number(Number(v).toFixed(3)).toString()
+}
 
 export default function Inventory() {
   const [items, setItems] = useState([])
@@ -202,6 +206,8 @@ export default function Inventory() {
 
   const exportData = filtered.map(item => ({
     ...item,
+    current_quantity: formatQty(item.current_quantity),
+    minimum_quantity: formatQty(item.minimum_quantity),
     unit_cost_fmt: (+item.unit_cost || 0).toFixed(2),
     total_value_fmt: ((+item.current_quantity || 0) * (+item.unit_cost || 0)).toFixed(2),
     expiry_date: item.expiry_date || '—',
@@ -353,8 +359,8 @@ export default function Inventory() {
                   <tr key={item.id}>
                     <td className="font-bold" style={{ color: 'var(--c-text)' }}>{item.name}</td>
                     <td><span className="badge badge-neutral">{item.category}</span></td>
-                    <td className={item.status !== 'OK' ? 'text-danger font-bold' : ''}>{item.current_quantity}</td>
-                    <td className="text-muted">{item.minimum_quantity}</td>
+                    <td className={item.status !== 'OK' ? 'text-danger font-bold' : ''}>{formatQty(item.current_quantity)}</td>
+                    <td className="text-muted">{formatQty(item.minimum_quantity)}</td>
                     <td>{item.unit}</td>
                     <td>{fmtJD(item.unit_cost)}</td>
                     <td className="text-gold font-bold">{fmtJD(item.current_quantity * item.unit_cost)}</td>
@@ -388,7 +394,7 @@ export default function Inventory() {
           </>
         }
       >
-        <form id="inventory-form" onSubmit={handleSave}>
+        <form id="inventory-form" onSubmit={handleSave} noValidate>
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">Category</label>
@@ -453,7 +459,7 @@ export default function Inventory() {
           <div className="form-grid mt-4">
             <div className="form-group">
               <label className="form-label">Current Quantity</label>
-              <input id="inv-qty" className="form-input" type="number" step="0.01" min="0" value={form.current_quantity} onChange={e => setField('current_quantity', e.target.value)} />
+              <input id="inv-qty" className="form-input" type="number" step="1" min="0" value={form.current_quantity} onChange={e => setField('current_quantity', e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Unit</label>
@@ -461,11 +467,11 @@ export default function Inventory() {
             </div>
             <div className="form-group">
               <label className="form-label">Unit Cost (JD)</label>
-              <input id="inv-unit-cost" className="form-input" type="number" step="0.01" min="0" value={form.unit_cost} onChange={e => setField('unit_cost', e.target.value)} />
+              <input id="inv-unit-cost" className="form-input" type="number" step="1" min="0" value={form.unit_cost} onChange={e => setField('unit_cost', e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Minimum Quantity</label>
-              <input id="inv-min-qty" className="form-input" type="number" step="0.01" min="0" value={form.minimum_quantity} onChange={e => setField('minimum_quantity', e.target.value)} />
+              <input id="inv-min-qty" className="form-input" type="number" step="1" min="0" value={form.minimum_quantity} onChange={e => setField('minimum_quantity', e.target.value)} />
             </div>
           </div>
           <div className="form-grid mt-4">

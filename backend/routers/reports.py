@@ -165,6 +165,20 @@ def get_dashboard(db: Session = Depends(get_db), _=Depends(get_current_user)):
         total_boxes_sold += boxes
         total_pieces_sold += pieces
 
+    # All-time sales
+    all_time_orders = db.query(models.Order).filter(
+        models.Order.status == "Delivered",
+        models.Order.approval_status == "Approved"
+    ).all()
+    all_time_sales = sum(o.total_amount for o in all_time_orders)
+
+    # All-time expenses
+    all_time_expenses_q = db.query(func.sum(models.Expense.total_cost)).filter(
+        models.Expense.approval_status == "Approved"
+    ).scalar()
+    all_time_expenses = all_time_expenses_q or 0.0
+    all_time_net_profit = all_time_sales - all_time_expenses
+
     return {
         "today_sales": today_sales,
         "today_orders": today_orders_count,
@@ -182,7 +196,10 @@ def get_dashboard(db: Session = Depends(get_db), _=Depends(get_current_user)):
         "total_pieces_in_stock": total_pieces_in_stock,
         "product_stock_breakdown": product_stock_breakdown,
         "total_boxes_sold": total_boxes_sold,
-        "total_pieces_sold": total_pieces_sold
+        "total_pieces_sold": total_pieces_sold,
+        "all_time_sales": all_time_sales,
+        "all_time_expenses": all_time_expenses,
+        "all_time_net_profit": all_time_net_profit
     }
 
 
