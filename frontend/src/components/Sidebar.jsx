@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   LayoutDashboard, Receipt, Package, Factory, ShoppingBag,
-  ShoppingCart, Users, Megaphone, BarChart3, LogOut, X, UserCog
+  ShoppingCart, Users, Megaphone, BarChart3, LogOut, X, UserCog, Truck
 } from 'lucide-react'
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/products',   label: 'Products',   icon: ShoppingBag },
   { to: '/orders',     label: 'Orders',     icon: ShoppingCart },
   { to: '/customers',  label: 'Customers',  icon: Users },
+  { to: '/suppliers',  label: 'Suppliers',  icon: Truck },
   { to: '/marketing',  label: 'Marketing',  icon: Megaphone },
   { to: '/reports',    label: 'Reports',    icon: BarChart3 },
   { to: '/users',      label: 'Users & Staff', icon: UserCog },
@@ -52,7 +53,7 @@ export default function Sidebar({ isOpen, onClose }) {
         <div className="nav-section-label">Navigation</div>
         {navItems.filter(item => {
           if (user?.role === 'staff') {
-            return ['/orders', '/expenses', '/customers'].includes(item.to)
+            return ['/orders', '/expenses', '/customers', '/suppliers'].includes(item.to)
           }
           if (user?.role === 'admin') {
             return item.to !== '/users'

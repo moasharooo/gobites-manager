@@ -20,8 +20,7 @@ from database import engine, SessionLocal
 import models
 from auth import get_password_hash
 
-# Import routers
-from routers import auth, expenses, inventory, production, products, orders, customers, marketing, reports
+from routers import auth, expenses, inventory, production, products, orders, customers, marketing, reports, suppliers
 
 # Create all tables
 models.Base.metadata.create_all(bind=engine)
@@ -61,6 +60,7 @@ app.include_router(orders.router)
 app.include_router(customers.router)
 app.include_router(marketing.router)
 app.include_router(reports.router)
+app.include_router(suppliers.router)
 
 
 def seed_users():

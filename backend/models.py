@@ -98,6 +98,7 @@ class Expense(Base):
     unit = Column(String(50))
     total_cost = Column(Float, nullable=False)
     supplier = Column(String(200))
+    supplier_branch = Column(String(200))
     payment_method = Column(String(50))
     notes = Column(Text)
     approval_status = Column(String(50), default="Approved")
@@ -121,6 +122,7 @@ class InventoryItem(Base):
     unit_cost = Column(Float, default=0.0)
     minimum_quantity = Column(Float, default=0.0)
     supplier = Column(String(200))
+    supplier_branch = Column(String(200))
     purchase_date = Column(Date)
     expiry_date = Column(Date)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -299,3 +301,28 @@ class ActivityLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")
+
+
+class Supplier(Base):
+    __tablename__ = "suppliers"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), unique=True, nullable=False)
+    phone = Column(String(50))
+    location = Column(String(500))
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    branches = relationship("SupplierBranch", back_populates="supplier", cascade="all, delete-orphan")
+
+
+class SupplierBranch(Base):
+    __tablename__ = "supplier_branches"
+    id = Column(Integer, primary_key=True, index=True)
+    supplier_id = Column(Integer, ForeignKey("suppliers.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(200), nullable=False)
+    phone = Column(String(50))
+    location = Column(String(500))
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    supplier = relationship("Supplier", back_populates="branches")

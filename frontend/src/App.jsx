@@ -14,6 +14,7 @@ import Customers from './pages/Customers'
 import Marketing from './pages/Marketing'
 import Reports from './pages/Reports'
 import UsersPage from './pages/Users'
+import Suppliers from './pages/Suppliers'
 import { Menu, X } from 'lucide-react'
 
 function ProtectedLayout({ children }) {
@@ -76,6 +77,7 @@ function AppRoutes() {
       <Route path="/products"  element={user?.role === 'staff' ? <Navigate to="/orders" replace /> : <ProtectedLayout><Products /></ProtectedLayout>} />
       <Route path="/orders"    element={<ProtectedLayout><Orders /></ProtectedLayout>} />
       <Route path="/customers" element={<ProtectedLayout><Customers /></ProtectedLayout>} />
+      <Route path="/suppliers" element={<ProtectedLayout><Suppliers /></ProtectedLayout>} />
       <Route path="/marketing" element={user?.role === 'staff' ? <Navigate to="/orders" replace /> : <ProtectedLayout><Marketing /></ProtectedLayout>} />
       <Route path="/reports"   element={user?.role === 'staff' ? <Navigate to="/orders" replace /> : <ProtectedLayout><Reports /></ProtectedLayout>} />
       <Route path="/users"     element={user?.role === 'owner' ? <ProtectedLayout><UsersPage /></ProtectedLayout> : <Navigate to={user?.role === 'staff' ? "/orders" : "/"} replace />} />

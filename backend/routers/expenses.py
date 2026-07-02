@@ -54,7 +54,8 @@ def _adjust_inventory_for_expense(db: Session, expense: models.Expense, old_qty:
             unit=expense.unit,
             unit_cost=unit_cost,
             minimum_quantity=0.0,
-            supplier=expense.supplier
+            supplier=expense.supplier,
+            supplier_branch=expense.supplier_branch
         )
         db.add(new_item)
 

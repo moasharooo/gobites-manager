@@ -52,6 +52,7 @@ class ExpenseCreate(BaseModel):
     unit: Optional[str] = None
     total_cost: float
     supplier: Optional[str] = None
+    supplier_branch: Optional[str] = None
     payment_method: Optional[str] = None
     notes: Optional[str] = None
 
@@ -77,6 +78,7 @@ class InventoryItemCreate(BaseModel):
     unit_cost: float = 0.0
     minimum_quantity: float = 0.0
     supplier: Optional[str] = None
+    supplier_branch: Optional[str] = None
     purchase_date: Optional[date] = None
     expiry_date: Optional[date] = None
 
@@ -327,5 +329,52 @@ class ActivityLogOut(BaseModel):
     action: str
     details: str
     created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+# ─── Supplier ─────────────────────────────────────────────────────────────────
+
+class SupplierBranchCreate(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class SupplierBranchOut(SupplierBranchCreate):
+    id: int
+    supplier_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+class SupplierCreate(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    branch_name: Optional[str] = None
+    branch_phone: Optional[str] = None
+    branch_location: Optional[str] = None
+    branch_notes: Optional[str] = None
+
+
+class SupplierUpdate(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class SupplierOut(BaseModel):
+    id: int
+    name: str
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    branches: List[SupplierBranchOut] = []
     class Config:
         from_attributes = True

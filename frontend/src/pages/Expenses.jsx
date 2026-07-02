@@ -57,7 +57,7 @@ const EXPORT_COLUMNS = [
   { header: 'Notes', key: 'notes' }
 ]
 
-const emptyForm = { date: new Date().toISOString().split('T')[0], name: 'Chocolate', category: 'Raw Materials', quantity: 1, unit: 'kg', total_cost: '', supplier: '', payment_method: 'Cash', notes: '' }
+const emptyForm = { date: new Date().toISOString().split('T')[0], name: 'Chocolate', category: 'Raw Materials', quantity: 1, unit: 'kg', total_cost: '', supplier: '', supplier_branch: '', payment_method: 'Cash', notes: '' }
 
 const fmtJD = v => `${(+v || 0).toFixed(2)} JD`
 
@@ -65,6 +65,7 @@ export default function Expenses() {
   const { user } = useAuth()
   const isStaff = user?.role === 'staff'
   const [items, setItems] = useState([])
+  const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -75,6 +76,21 @@ export default function Expenses() {
   const [search, setSearch] = useState('')
   const [filterCategories, setFilterCategories] = useState([])
   const [filterItems, setFilterItems] = useState([])
+  const [filterSupplier, setFilterSupplier] = useState('')
+  const [filterBranch, setFilterBranch] = useState('')
+
+  // Auto-set branch when supplier changes in modal
+  useEffect(() => {
+    if (form.supplier) {
+      const matched = suppliers.find(s => s.name?.toLowerCase() === form.supplier?.toLowerCase())
+      if (matched && matched.branches?.length > 0) {
+        const branchNames = matched.branches.map(b => b.name)
+        if (!branchNames.includes(form.supplier_branch)) {
+          setForm(p => ({ ...p, supplier_branch: matched.branches[0].name }))
+        }
+      }
+    }
+  }, [form.supplier, suppliers])
   const [filterMonthFrom, setFilterMonthFrom] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -89,7 +105,19 @@ export default function Expenses() {
   const [selectedNut, setSelectedNut] = useState('')
   const [selectedPackaging, setSelectedPackaging] = useState('Bags')
 
-  const load = () => api.get('/expenses').then(r => setItems(r.data)).catch(console.error).finally(() => setLoading(false))
+  const load = () => {
+    setLoading(true)
+    Promise.all([
+      api.get('/expenses'),
+      api.get('/suppliers')
+    ])
+      .then(([expensesRes, suppliersRes]) => {
+        setItems(expensesRes.data)
+        setSuppliers(suppliersRes.data)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }
 
   useEffect(() => { load() }, [])
 
@@ -206,6 +234,14 @@ export default function Expenses() {
     } catch (err) { toast.error('Failed to reject') }
   }
 
+  const allSupplierNames = suppliers.map(s => s.name).sort()
+
+  const getBranchesForSupplier = (supplierName) => {
+    if (!supplierName) return []
+    const matched = suppliers.find(s => s.name?.toLowerCase() === supplierName.toLowerCase())
+    return matched?.branches || []
+  }
+
   const filtered = items
     .filter(i =>
       i.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -214,6 +250,8 @@ export default function Expenses() {
     )
     .filter(i => filterCategories.length === 0 || filterCategories.includes(i.category))
     .filter(i => filterItems.length === 0 || filterItems.includes(i.name))
+    .filter(i => !filterSupplier || i.supplier === filterSupplier)
+    .filter(i => !filterBranch || i.supplier_branch === filterBranch)
     .filter(i => {
       const d = i.date ? i.date.split('T')[0].slice(0, 7) : ''
       if (filterMonthFrom && d < filterMonthFrom) return false
@@ -221,11 +259,13 @@ export default function Expenses() {
       return true
     })
 
-  // Category breakdowns for summary cards (based on filtered month)
+  // Category breakdowns for summary cards (based on filtered month, supplier and branch)
   const monthItems = items.filter(i => {
     const d = i.date ? i.date.split('T')[0].slice(0, 7) : ''
     if (filterMonthFrom && d < filterMonthFrom) return false
     if (filterMonthTo && d > filterMonthTo) return false
+    if (filterSupplier && i.supplier !== filterSupplier) return false
+    if (filterBranch && i.supplier_branch !== filterBranch) return false
     return true
   })
   const rawMatTotal = monthItems.filter(i => i.category === 'Raw Materials').reduce((s, i) => s + (+i.total_cost || 0), 0)
@@ -395,12 +435,92 @@ export default function Expenses() {
             />
           )}
 
-          {(search || filterCategories.length > 0 || filterItems.length > 0) && (
-            <button className="filter-clear-btn" onClick={() => { setSearch(''); setFilterCategories([]); setFilterItems([]); }}>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <select
+              className="form-select filter-select"
+              value={filterSupplier}
+              onChange={e => { setFilterSupplier(e.target.value); setFilterBranch(''); }}
+              style={{
+                minWidth: 180,
+                height: 38,
+                background: 'var(--c-surface-2)',
+                color: filterSupplier ? 'var(--c-text)' : 'var(--c-text-3)',
+                borderColor: 'var(--c-border)',
+                borderRadius: 'var(--r-md)',
+                padding: '0 32px 0 16px',
+                fontSize: '12.5px',
+                appearance: 'none',
+                cursor: 'pointer',
+                backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237A6858' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+              }}
+            >
+              <option value="" style={{ background: '#1A110C', color: 'var(--c-text-3)' }}>All Suppliers</option>
+              {allSupplierNames.map(name => (
+                <option key={name} value={name} style={{ background: '#1A110C', color: 'var(--c-text-2)' }}>{name}</option>
+              ))}
+            </select>
+          </div>
+
+          {filterSupplier && getBranchesForSupplier(filterSupplier).length > 0 && (
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <select
+                className="form-select filter-select"
+                value={filterBranch}
+                onChange={e => setFilterBranch(e.target.value)}
+                style={{
+                  minWidth: 160,
+                  height: 38,
+                  background: 'var(--c-surface-2)',
+                  color: filterBranch ? 'var(--c-text)' : 'var(--c-text-3)',
+                  borderColor: 'var(--c-border)',
+                  borderRadius: 'var(--r-md)',
+                  padding: '0 32px 0 16px',
+                  fontSize: '12.5px',
+                  appearance: 'none',
+                  cursor: 'pointer',
+                  backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237A6858' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 12px center',
+                }}
+              >
+                <option value="" style={{ background: '#1A110C', color: 'var(--c-text-3)' }}>All Branches</option>
+                {getBranchesForSupplier(filterSupplier).map(b => (
+                  <option key={b.id} value={b.name} style={{ background: '#1A110C', color: 'var(--c-text-2)' }}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {(search || filterCategories.length > 0 || filterItems.length > 0 || filterSupplier || filterBranch) && (
+            <button className="filter-clear-btn" onClick={() => { setSearch(''); setFilterCategories([]); setFilterItems([]); setFilterSupplier(''); setFilterBranch(''); }}>
               <X size={12} /> Clear Filters
             </button>
           )}
         </div>
+
+        {filterSupplier && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(201,168,76,0.02) 100%)',
+            border: '1px solid rgba(201,168,76,0.2)',
+            borderRadius: 'var(--r-md)',
+            padding: '12px 16px',
+            margin: '0 16px 16px 16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <div style={{ fontSize: 13.5, color: 'var(--c-text-2)' }}>
+              Total purchases from <strong className="text-gold" style={{ fontSize: 14.5 }}>{filterSupplier}</strong>
+              {filterBranch && <span> (Branch: <strong className="text-gold">{filterBranch}</strong>)</span>}
+              {(filterMonthFrom || filterMonthTo) && <span> for selected period</span>}:
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--c-text)' }}>
+              {fmtJD(monthItems.reduce((sum, item) => sum + (item.total_cost || 0), 0))}
+            </div>
+          </div>
+        )}
 
         <div className="table-wrapper">
           {loading ? (
@@ -543,10 +663,50 @@ export default function Expenses() {
               <input id="expense-cost" className="form-input" type="number" step="1" min="0" placeholder="0.00" value={form.total_cost} onChange={e => setField('total_cost', e.target.value)} required />
             </div>
           </div>
-          <div className="form-grid mt-4">
+          <div className="form-grid mt-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
             <div className="form-group">
               <label className="form-label">Supplier</label>
-              <input id="expense-supplier" className="form-input" placeholder="Supplier name" value={form.supplier} onChange={e => setField('supplier', e.target.value)} />
+              <input
+                id="expense-supplier"
+                className="form-input"
+                placeholder="Select or type supplier name"
+                value={form.supplier || ''}
+                onChange={e => setField('supplier', e.target.value)}
+                list="expenses-modal-suppliers-list"
+              />
+              <datalist id="expenses-modal-suppliers-list">
+                {allSupplierNames.map(name => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Branch</label>
+              {(() => {
+                const matched = suppliers.find(s => s.name?.toLowerCase() === form.supplier?.toLowerCase())
+                const branches = matched?.branches || []
+                if (branches.length > 0) {
+                  return (
+                    <select
+                      className="form-select"
+                      value={form.supplier_branch || ''}
+                      onChange={e => setField('supplier_branch', e.target.value)}
+                    >
+                      {branches.map(b => (
+                        <option key={b.id} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
+                  )
+                }
+                return (
+                  <input
+                    className="form-input"
+                    placeholder="Branch name (optional)"
+                    value={form.supplier_branch || ''}
+                    onChange={e => setField('supplier_branch', e.target.value)}
+                  />
+                )
+              })()}
             </div>
             <div className="form-group">
               <label className="form-label">Payment Method</label>
